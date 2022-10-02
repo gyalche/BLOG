@@ -14,6 +14,7 @@ const Single = () => {
   const [post, setPost] = useState([]);
 
   const location = useLocation();
+  console.log(location);
   const postId = location.pathname.split('/')[2];
 
   useEffect(() => {
