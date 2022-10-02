@@ -1,44 +1,64 @@
-import React from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import edit from '../img/edit.png';
 import del from '../img/del.png';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Menu from '../components/Menu';
+import axios from '../axios';
+import moment from 'moment';
+import { AuthContext } from '../context/authContext';
 
 const Single = () => {
+  const navigate = useNavigate();
+  const { currentUser } = useContext(AuthContext);
+
+  const [post, setPost] = useState([]);
+
+  const location = useLocation();
+  const postId = location.pathname.split('/')[2];
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await axios.get(`/posts/${postId}`);
+        setPost(res.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchData();
+  }, [postId]);
+
+  const handleDelete = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.delete(`/posts/${postId}`);
+      navigate('/');
+    } catch (error) {}
+  };
+
   return (
     <div className='single'>
       <div className='content'>
-        <img
-          src='https://images.unsplash.com/photo-1523766775147-152d0d6e2adb?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=388&q=80'
-          alt='image'
-        />
+        <img src={post.img} alt='image' />
         <div className='user'>
-          <img
-            src='https://images.unsplash.com/photo-1523766775147-152d0d6e2adb?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=388&q=80'
-            alt='img'
-          />
+          {post.userImg && <img src={post.userImg} alt='img' />}
           <div className='info'>
-            <span>Dawa</span>
-            <p>Posted 2 days ago</p>
+            <span>{post.username}</span>
+            <p>Posted {moment(post.date).fromNow()}</p>
           </div>
-          <div className='edit'>
-            <Link to={`/write?edit=2`}>
-              <img src={edit} alt='edit' />
-            </Link>
-            <img src={del} alt='edit' />
-          </div>
+          {currentUser.username === post.username && (
+            <div className='edit'>
+              <Link to={`/write?edit=2`} state={post}>
+                <img src={edit} alt='edit' />
+              </Link>
+              <img onClick={handleDelete} src={del} alt='edit' />
+            </div>
+          )}
         </div>
-        <h1>Page Headings and Subheadings</h1>
-        <p>
-          Write headings so readers know exactly what the page is about without
-          reading it word for word. Headings and subheadings are very important
-          for easier scanning. As Web readers scan down a page, they read the
-          beginnings of headings more than the ends. Use concise, descriptive
-          keywords about the topic at the beginning of subheadings. In the
-          heading or subheading, use key ideas for the text that follows.
-        </p>
+        <h1>{post.title}</h1>
+        {post.desc}
       </div>
-      <Menu />
+      <Menu cat={post.cat} />
     </div>
   );
 };
